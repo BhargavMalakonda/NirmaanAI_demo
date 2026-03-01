@@ -1,10 +1,5 @@
 # NirmaanAI_demo
 Functional prototype of NirmaanAI for createch 2026
-# NirmaanAI Demo
-
-## AI-Powered Concrete Curing Optimization for Precast Construction
-
----
 
 ## Overview
 
@@ -131,4 +126,5 @@ hours:      0.5926 (59.3%)
 humidity:   0.1823 (18.2%)
 temperature: 0.1303 (13.0%)
 curing_type: 0.0948 (9.5%)
+
 
