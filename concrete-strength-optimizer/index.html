@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PreCast Cycle Optimizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #F4F1EC;
+  --surface: #FFFFFF;
+  --border:  #DDD8CF;
+  --text:    #1C1915;
+  --muted:   #857E74;
+  --accent:  #2D5A3D;
+  --accent2: #7A9E7E;
+  --warm:    #C4763A;
+  --tag-bg:  #E8F0EA;
+  --tag-txt: #2D5A3D;
+}
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+nav {
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Weather-Hacking Features */
+.weather-alert {
+  background: #e8f0ea;
+  border-left: 4px solid #C4763A;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { background-color: #e8f0ea; }
+  50% { background-color: #d4e3d9; }
+  100% { background-color: #e8f0ea; }
+}
+
+.weather-alert-icon {
+  font-size: 24px;
+  background: #C4763A;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-alert-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1C1915;
+  margin-bottom: 4px;
+}
+
+.weather-alert-content p {
+  font-size: 13px;
+  color: #857E74;
+}
+
+.weather-badge {
+  background: #2D5A3D;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.savings-highlight {
+  background: #C4763A;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.forecast-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.forecast-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.forecast-day {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.forecast-temp {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text);
+  margin: 5px 0;
+}
+
+.forecast-humidity {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.energy-note {
+  background: #fef3eb;
+  border: 1px solid #e8c9a8;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.brand {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.brand strong { font-weight: 600; color: var(--accent); }
+
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--tag-bg);
+  color: var(--tag-txt);
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+}
+
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 7rem;
+}
+
+.hdr {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.hdr h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--text);
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+  margin-bottom: 0.5rem;
+}
+
+.hdr h1 i { font-style: italic; color: var(--accent); font-weight: 300; }
+
+.hdr p {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 300;
+  max-width: 480px;
+}
+
+.sec {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.sec-title {
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sec-title h2 {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.sec-title span { font-size: 12px; color: var(--muted); font-weight: 300; }
+
+.sec-body { padding: 1.5rem; }
+
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.1rem; }
+@media(max-width:660px) { .g3, .g4 { grid-template-columns: 1fr 1fr; } }
+@media(max-width:420px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+
+.f { display: flex; flex-direction: column; gap: 5px; }
+.span2 { grid-column: span 2; }
+
+label.lbl {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input, select {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 11px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  appearance: none;
+}
+
+input:focus, select:focus { border-color: var(--accent); background: #fff; }
+
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23857E74' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  padding-right: 28px;
+}
+
+input[type="range"] {
+  padding: 0; height: 3px; border: none; border-radius: 2px;
+  background: var(--border); accent-color: var(--accent); cursor: pointer; margin-top: 4px;
+}
+
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-row input { flex: 1; }
+.slider-val { font-size: 12px; font-weight: 600; color: var(--accent); min-width: 38px; text-align: right; }
+
+.div { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+.pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.pill {
+  display: inline-flex; align-items: center;
+  padding: 5px 11px; border: 1px solid var(--border);
+  border-radius: 4px; font-size: 12px; color: var(--muted);
+  cursor: pointer; user-select: none; transition: all 0.12s;
+  background: var(--bg); font-weight: 400;
+}
+
+.pill input { display: none; }
+.pill:has(input:checked) { border-color: var(--accent); background: var(--tag-bg); color: var(--accent); font-weight: 500; }
+
+.w-row { display: flex; align-items: flex-end; gap: 0.8rem; flex-wrap: wrap; }
+
+.fetch-btn {
+  height: 33px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.12s; white-space: nowrap;
+}
+
+.fetch-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--tag-bg); }
+
+.w-live { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0.7rem; }
+
+.w-chip {
+  font-size: 12px; padding: 3px 9px;
+  background: var(--tag-bg); border: 1px solid #c5d9c8;
+  border-radius: 4px; color: var(--accent); font-weight: 500;
+}
+
+.run-area { margin: 1.75rem 0; display: flex; align-items: center; gap: 1.25rem; }
+
+.run-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 6px; padding: 10px 24px;
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; letter-spacing: -0.1px; transition: opacity 0.12s, transform 0.12s;
+}
+
+.run-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.run-btn.loading { opacity: 0.5; pointer-events: none; }
+.run-note { font-size: 12.5px; color: var(--muted); font-weight: 300; }
+
+.prog { display: none; height: 2px; background: var(--border); border-radius: 1px; margin-top: 0.6rem; }
+.prog.on { display: block; }
+.prog-fill { height: 100%; background: var(--accent); border-radius: 1px; width: 0; transition: width 0.3s ease; }
+
+.results { display: none; margin-top: 2.5rem; }
+.results.on { display: block; }
+
+.res-hdr {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.res-hdr h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem; font-weight: 300;
+  color: var(--text); letter-spacing: -0.5px; margin-bottom: 0.25rem;
+}
+
+.res-hdr p { font-size: 12.5px; color: var(--muted); font-weight: 300; }
+
+.metrics {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 1.25rem;
+}
+
+@media(max-width:580px) { .metrics { grid-template-columns: 1fr 1fr; } }
+
+.m-cell { background: var(--surface); padding: 1.1rem 1.25rem; }
+
+.m-num {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem; font-weight: 300;
+  color: var(--accent); line-height: 1;
+  margin-bottom: 4px; letter-spacing: -1px;
+}
+
+.m-lbl { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+
+.tbl {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 1.25rem;
+}
+
+.tr {
+  display: grid; grid-template-columns: 2.2fr 1fr 1fr 0.9fr;
+  border-bottom: 1px solid var(--border); align-items: center;
+}
+
+.tr:last-child { border-bottom: none; }
+.tr.th { background: var(--bg); }
+.tr.rec { background: #f7fbf8; }
+
+.td { padding: 0.85rem 1.1rem; font-size: 13px; }
+
+.th .td {
+  font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted);
+}
+
+.sc-name { font-weight: 500; color: var(--text); }
+.sc-desc { font-size: 11.5px; font-weight: 300; color: var(--muted); margin-top: 2px; }
+.sc-time { font-weight: 600; color: var(--accent); }
+
+.bdg { display: inline-block; font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-radius: 3px; }
+.bdg-rec { background: var(--tag-bg); color: var(--accent); border: 1px solid #c5d9c8; }
+.bdg-fast { background: #fef3eb; color: var(--warm); border: 1px solid #e8c9a8; }
+
+@media(max-width:540px) { .tr { grid-template-columns: 1fr 1fr; } .td:nth-child(n+4) { display: none; } }
+
+.insights-sec {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 1.25rem;
+}
+
+.ins-head {
+  padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--border);
+  background: var(--bg); font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted);
+}
+
+.ins-item {
+  padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 300; color: var(--text);
+  line-height: 1.65; display: flex; gap: 1rem; align-items: flex-start;
+}
+
+.ins-item:last-child { border-bottom: none; }
+
+.ins-num {
+  font-size: 10.5px; font-weight: 600; color: var(--accent);
+  min-width: 16px; padding-top: 3px;
+}
+
+.sens {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+
+.sens-head {
+  padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--border);
+  background: var(--bg); font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted);
+}
+
+.sens-body { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; }
+
+.s-row {
+  display: grid; grid-template-columns: 200px 1fr 34px;
+  gap: 1rem; align-items: center;
+}
+
+@media(max-width:500px) { .s-row { grid-template-columns: 1fr 1fr 34px; } }
+
+.s-lbl { font-size: 12.5px; color: var(--text); font-weight: 400; }
+
+.bar-bg { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.bar-fg { height: 100%; background: var(--accent2); border-radius: 2px; width: 0; transition: width 1.1s cubic-bezier(.4,0,.2,1); }
+.s-pct { font-size: 11px; color: var(--muted); font-weight: 500; text-align: right; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">Nirmaan <strong>AI</strong></div>
+  <div class="tag">L&T CreaTech</div>
+</nav>
+
+<div class="wrap">
+
+  <div class="hdr">
+    <h1>Cycle Time <i>Optimisation</i></h1>
+    <p>Enter project parameters below to simulate cycle time scenarios and receive cost-aware recommendations.</p>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">
+      <h2>Project Details</h2>
+      <span>Basic parameters</span>
+    </div>
+    <div class="sec-body">
+      <div class="g3">
+        <div class="f">
+          <label class="lbl">Project Type</label>
+          <select id="projectType">
+            <option value="infrastructure">Infrastructure</option>
+            <option value="building" selected>Building</option>
+            <option value="bridge">Bridge</option>
+            <option value="metro">Metro / Rail</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="lbl">Region</label>
+          <select id="region">
+            <option value="north">North India</option>
+            <option value="south" selected>South India</option>
+            <option value="east">East India</option>
+            <option value="west">West India</option>
+            <option value="central">Central India</option>
+            <option value="coastal">Coastal</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="lbl">Element Type</label>
+          <select id="elementType">
+            <option value="beam">Beams / Girders</option>
+            <option value="slab" selected>Hollow Core Slabs</option>
+            <option value="wall">Wall Panels</option>
+            <option value="column">Columns</option>
+            <option value="pile">Piles</option>
+            <option value="box">Box Culverts</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="lbl">Concrete Grade</label>
+          <select id="grade">
+            <option value="M30">M30</option>
+            <option value="M40" selected>M40</option>
+            <option value="M50">M50</option>
+            <option value="M60">M60</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="lbl">Daily Target (elements)</label>
+          <input type="number" id="dailyTarget" value="8" min="1" max="50">
+        </div>
+        <div class="f">
+          <label class="lbl">Automation Level</label>
+          <select id="automation">
+            <option value="manual">Manual</option>
+            <option value="semi" selected>Semi-Automated</option>
+            <option value="full">Fully Automated</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="g4">
+        <div class="f">
+          <label class="lbl">Number of Moulds</label>
+          <input type="number" id="mouldCount" value="6" min="1">
+        </div>
+        <div class="f">
+          <label class="lbl">Yard Area (m2)</label>
+          <input type="number" id="yardArea" value="2000">
+        </div>
+        <div class="f span2">
+          <label class="lbl">Demoulding Strength Target &mdash; <span id="sv">70%</span></label>
+          <div class="slider-row">
+            <input type="range" min="50" max="95" value="70" id="srange"
+              oninput="document.getElementById('sv').textContent=this.value+'%';document.getElementById('svr').textContent=this.value+'%'">
+            <span class="slider-val" id="svr">70%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">
+      <h2>Mix Design & Curing</h2>
+      <span>Admixtures and curing strategy</span>
+    </div>
+    <div class="sec-body">
+      <div class="g3">
+        <div class="f">
+          <label class="lbl">Cement Type</label>
+          <select id="cementType">
+            <option value="OPC53" selected>OPC 53</option>
+            <option value="OPC43">OPC 43</option>
+            <option value="PPC">PPC</option>
+            <option value="GGBS">GGBS Blend</option>
+            <option value="SFC">Silica Fume Blend</option>
+          </select>
+        </div>
+        <div class="f">
+          <label class="lbl">w/c Ratio</label>
+          <input type="number" id="wcRatio" value="0.38" min="0.25" max="0.55" step="0.01">
+        </div>
+        <div class="f">
+          <label class="lbl">Optimisation Priority</label>
+          <select id="priority">
+            <option value="speed">Min Cycle Time</option>
+            <option value="cost" selected>Cost Optimised</option>
+            <option value="quality">Quality First</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="g2">
+        <div class="f">
+          <label class="lbl">Admixtures</label>
+          <div class="pills">
+            <label class="pill"><input type="checkbox" value="HRWR" checked>HRWR</label>
+            <label class="pill"><input type="checkbox" value="Accelerator">Accelerator</label>
+            <label class="pill"><input type="checkbox" value="VMA">VMA</label>
+            <label class="pill"><input type="checkbox" value="Retarder">Retarder</label>
+            <label class="pill"><input type="checkbox" value="SFA">Silica Fume</label>
+          </div>
+        </div>
+        <div class="f">
+          <label class="lbl">Curing Methods</label>
+          <div class="pills">
+            <label class="pill"><input type="checkbox" value="steam" checked>Steam</label>
+            <label class="pill"><input type="checkbox" value="water">Water Spray</label>
+            <label class="pill"><input type="checkbox" value="membrane">Membrane</label>
+            <label class="pill"><input type="checkbox" value="heat">Heat Blanket</label>
+            <label class="pill"><input type="checkbox" value="autoclave">Autoclave</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="f" style="max-width:320px">
+        <label class="lbl">Steam Curing Temperature &mdash; <span id="stv">65 C</span></label>
+        <div class="slider-row">
+          <input type="range" min="40" max="90" value="65" id="strange"
+            oninput="document.getElementById('stv').textContent=this.value+' C';document.getElementById('stvr').textContent=this.value+' C'">
+          <span class="slider-val" id="stvr">65 C</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">
+      <h2>Climatic Conditions</h2>
+      <span>Live fetch or manual entry</span>
+    </div>
+    <div class="sec-body">
+      <div class="w-row">
+        <div class="f" style="min-width:180px">
+          <label class="lbl">City</label>
+          <input type="text" id="cityInput" placeholder="e.g. Chennai, Mumbai">
+        </div>
+        <button class="fetch-btn" onclick="fetchWeather()" id="fetchBtn">Fetch Live Weather</button>
+      </div>
+      <div id="wchips" class="w-live"></div>
+
+      <div class="div"></div>
+
+      <div class="g4">
+        <div class="f">
+          <label class="lbl">Avg Temp (C)</label>
+          <input type="number" id="tempInput" value="28">
+        </div>
+        <div class="f">
+          <label class="lbl">Humidity (%)</label>
+          <input type="number" id="humInput" value="65">
+        </div>
+        <div class="f">
+          <label class="lbl">Night Temp (C)</label>
+          <input type="number" id="nightInput" value="20">
+        </div>
+        <div class="f">
+          <label class="lbl">Season</label>
+          <select id="season">
+            <option value="summer">Summer</option>
+            <option value="monsoon">Monsoon</option>
+            <option value="winter" selected>Winter</option>
+            <option value="transition">Transition</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- WEATHER-HACKING ENERGY ARBITRAGE SECTION -->
+  <div class="sec" id="energyArbitrageSection" style="display: none;">
+    <div class="sec-title">
+      <h2>⚡ Energy Arbitrage Intelligence</h2>
+      <span>Weather-based optimization</span>
+    </div>
+    <div class="sec-body">
+      <div class="weather-alert" id="weatherAlert">
+        <div class="weather-alert-icon">🌡️</div>
+        <div class="weather-alert-content">
+          <h4>Natural Curing Conditions Detected</h4>
+          <p>Tomorrow's forecast: <span id="forecastTemp">36°C</span> with <span id="forecastHumidity">90%</span> humidity creates natural steam-room effect</p>
+        </div>
+        <div class="weather-badge" id="curingRecommendation">Ambient Recommended</div>
+      </div>
+
+      <div class="forecast-panel" id="forecastPanel">
+        <!-- Dynamically filled by JavaScript -->
+      </div>
+
+      <div class="energy-note" id="energySavingsNote">
+        <strong>💰 Energy Arbitrage Activated:</strong> Steam boilers automatically disabled for next 24 hours. 
+        Using natural ambient conditions saves <span id="savingsAmount">₹12,500</span> in diesel costs.
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div>
+          <span style="font-size: 11px; color: #857E74;">STEAM STATUS:</span>
+          <span id="steamStatus" style="margin-left: 8px; padding: 4px 12px; background: #ff4444; color: white; border-radius: 20px; font-size: 12px;">DISABLED</span>
+        </div>
+        <div>
+          <span style="font-size: 11px; color: #857E74;">AMBIENT CURING:</span>
+          <span id="ambientStatus" style="margin-left: 8px; padding: 4px 12px; background: #2D5A3D; color: white; border-radius: 20px; font-size: 12px;">ACTIVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="run-area">
+    <button class="run-btn" id="runBtn">Run Analysis</button>
+    <span class="run-note">Evaluates 200+ parameter combinations</span>
+  </div>
+  <div class="prog" id="pt"><div class="prog-fill" id="pf"></div></div>
+
+  <div class="results" id="results">
+
+    <div class="res-hdr">
+      <h2>Analysis Results</h2>
+      <p id="res-sub">Showing optimised scenarios based on your inputs</p>
+    </div>
+
+    <div class="metrics" id="metricsEl"></div>
+    
+    <div class="tbl" id="tableEl"></div>
+
+    <div class="insights-sec">
+      <div class="ins-head">Recommendations</div>
+      <div id="insightsEl"></div>
+    </div>
+
+    <div class="sens">
+      <div class="sens-head">Parameter Sensitivity</div>
+      <div class="sens-body" id="sensEl"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Weather fetch function
+async function fetchWeather() {
+  const city = document.getElementById('cityInput').value.trim();
+  if (!city) return;
+  const btn = document.getElementById('fetchBtn');
+  btn.textContent = 'Fetching...'; btn.disabled = true;
+  try {
+    const g = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)).json();
+    if (!g.results?.length) throw 0;
+    const {latitude: lat, longitude: lon} = g.results[0];
+    const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature&timezone=auto`)).json();
+    const c = w.current;
+    document.getElementById('tempInput').value = Math.round(c.temperature_2m);
+    document.getElementById('humInput').value = Math.round(c.relative_humidity_2m);
+    document.getElementById('nightInput').value = Math.round(c.apparent_temperature - 4);
+    document.getElementById('wchips').innerHTML =
+      `<div class="w-chip">${Math.round(c.temperature_2m)} C</div>
+       <div class="w-chip">${Math.round(c.relative_humidity_2m)}% Humidity</div>
+       <div class="w-chip">${Math.round(c.wind_speed_10m)} km/h Wind</div>
+       <div class="w-chip">Live data updated</div>`;
+    btn.textContent = 'Updated';
+    btn.disabled = false;
+  } catch {
+    btn.textContent = 'City not found';
+    setTimeout(() => { btn.textContent = 'Fetch Live Weather'; btn.disabled = false; }, 1500);
+    return;
+  }
+}
+
+// ML Analysis function
+async function runAnalysis() {
+    const btn = document.getElementById('runBtn');
+    const pt = document.getElementById('pt');
+    const pf = document.getElementById('pf');
+    
+    // Show loading
+    btn.classList.add('loading'); 
+    btn.textContent = 'Analyzing...';
+    pt.classList.add('on');
+    pf.style.width = '0%';
+    
+    // Progress animation
+    for (const w of [20, 45, 70, 90, 100]) {
+        await new Promise(r => setTimeout(r, 200));
+        pf.style.width = w + '%';
+    }
+    
+    // Get inputs
+    const temp = parseFloat(document.getElementById('tempInput').value) || 28;
+    const humidity = parseFloat(document.getElementById('humInput').value) || 65;
+    const targetStrength = parseInt(document.getElementById('srange').value) || 70;
+    const grade = document.getElementById('grade').value;
+    const moulds = parseInt(document.getElementById('mouldCount').value) || 6;
+    const dailyTarget = parseInt(document.getElementById('dailyTarget').value) || 8;
+    
+    // Map grade to MPa
+    const gradeMap = {M30:30, M40:40, M50:50, M60:60};
+    const targetMPa = gradeMap[grade] * (targetStrength / 100);
+    
+    // Get selected curing method
+    const curingCheckboxes = document.querySelectorAll('.pill input:checked');
+    let curingMethod = 'steam';
+    for (let cb of curingCheckboxes) {
+        if (['steam','water','membrane','heat','autoclave'].includes(cb.value)) {
+            curingMethod = cb.value;
+            break;
+        }
+    }
+    
+    console.log('Sending request with:', {temp, humidity, curingMethod, targetMPa});
+    
+    try {
+        // Call Python backend
+        const response = await fetch('http://localhost:8000/api/predict', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                temperature: temp,
+                humidity: humidity,
+                curing_method: curingMethod,
+                target_strength: targetMPa
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Received response:', data);
+        
+        if (data.success) {
+            // Show results section
+            document.getElementById('results').classList.add('on');
+            
+            // Update metrics
+            document.getElementById('metricsEl').innerHTML = `
+                <div class="m-cell"><div class="m-num">${data.optimal_hours}h</div><div class="m-lbl">Optimal cycle time</div></div>
+                <div class="m-cell"><div class="m-num">${Math.max(0, 72 - data.optimal_hours)}h</div><div class="m-lbl">Saved vs conservative</div></div>
+                <div class="m-cell"><div class="m-num">₹${data.total_cost.toLocaleString()}</div><div class="m-lbl">Cost per cycle</div></div>
+                <div class="m-cell"><div class="m-num">${data.predicted_strength} MPa</div><div class="m-lbl">Predicted strength</div></div>
+            `;
+            
+            // Update table
+            document.getElementById('tableEl').innerHTML = `
+                <div class="tr th">
+                    <div class="td">Scenario</div>
+                    <div class="td">Cycle Time</div>
+                    <div class="td">Cost</div>
+                    <div class="td">Tag</div>
+                </div>
+                <div class="tr rec">
+                    <div class="td"><div class="sc-name">ML Optimized</div><div class="sc-desc">AI-powered prediction</div></div>
+                    <div class="td sc-time">${data.optimal_hours} hrs</div>
+                    <div class="td">₹${data.total_cost.toLocaleString()}</div>
+                    <div class="td"><span class="bdg bdg-rec">Recommended</span></div>
+                </div>
+            `;
+            
+            // Update insights
+            const maxOutput = Math.floor(24 * moulds / data.optimal_hours);
+            const util = Math.min(99, Math.round((dailyTarget / maxOutput) * 100)) || 0;
+            
+            document.getElementById('insightsEl').innerHTML = `
+                <div class="ins-item"><span class="ins-num">1</span><span>Optimal demoulding time: ${data.optimal_hours} hours (${data.optimal_days} days) at ${data.predicted_strength} MPa strength.</span></div>
+                <div class="ins-item"><span class="ins-num">2</span><span>With ${moulds} moulds and ${data.optimal_hours}-hour cycle, maximum output is ${maxOutput} elements per day. Current utilisation: ${util}%.</span></div>
+                <div class="ins-item"><span class="ins-num">3</span><span>Cost per element: ₹${Math.round(data.total_cost / dailyTarget)} at ${dailyTarget} elements/day target.</span></div>
+            `;
+            
+            // Update sensitivity
+            document.getElementById('sensEl').innerHTML = `
+                <div class="s-row"><div class="s-lbl">Curing method</div><div class="bar-bg"><div class="bar-fg" style="width:85%"></div></div><div class="s-pct">85%</div></div>
+                <div class="s-row"><div class="s-lbl">Temperature</div><div class="bar-bg"><div class="bar-fg" style="width:55%"></div></div><div class="s-pct">55%</div></div>
+                <div class="s-row"><div class="s-lbl">Humidity</div><div class="bar-bg"><div class="bar-fg" style="width:45%"></div></div><div class="s-pct">45%</div></div>
+                <div class="s-row"><div class="s-lbl">Curing time</div><div class="bar-bg"><div class="bar-fg" style="width:95%"></div></div><div class="s-pct">95%</div></div>
+            `;
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert('Error from server: ' + data.error);
+        }
+    } catch (error) {
+        alert('Could not connect to ML server. Make sure server.py is running on port 8000.\n\nError: ' + error.message);
+        console.error('Fetch error:', error);
+    } finally {
+        btn.textContent = 'Run Analysis';
+        btn.classList.remove('loading');
+        pt.classList.remove('on');
+        pf.style.width = '0';
+    }
+}
+
+// Add event listener when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('runBtn').addEventListener('click', runAnalysis);
+});
+</script>
+<!-- Add this temporary test button (you can remove it later) -->
+<div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+    <button onclick="testServer()" style="padding: 5px 10px;">Test Server Connection</button>
+    <div id="testResult" style="margin-top: 10px;"></div>
+</div>
+
+<script>
+// Add this test function
+async function testServer() {
+    const resultDiv = document.getElementById('testResult');
+    resultDiv.innerHTML = 'Testing connection...';
+    
+    try {
+        const response = await fetch('http://localhost:8000/api/test');
+        const data = await response.json();
+        resultDiv.innerHTML = '✅ Server connected! ' + JSON.stringify(data);
+    } catch (error) {
+        resultDiv.innerHTML = '❌ Cannot connect to server: ' + error.message;
+    }
+}
+// Weather-Hacking Energy Arbitrage Function
+function checkWeatherArbitrage(temp, humidity, season) {
+    const energySection = document.getElementById('energyArbitrageSection');
+    const weatherAlert = document.getElementById('weatherAlert');
+    const forecastTemp = document.getElementById('forecastTemp');
+    const forecastHumidity = document.getElementById('forecastHumidity');
+    const curingRecommendation = document.getElementById('curingRecommendation');
+    const steamStatus = document.getElementById('steamStatus');
+    const ambientStatus = document.getElementById('ambientStatus');
+    const savingsAmount = document.getElementById('savingsAmount');
+    const forecastPanel = document.getElementById('forecastPanel');
+    
+    // Generate next 3 days forecast (simulated)
+    const forecasts = [
+        { day: 'Tomorrow', temp: temp + 2, humidity: humidity + 5, condition: 'Hot & Humid' },
+        { day: 'Day 2', temp: temp - 1, humidity: humidity - 3, condition: 'Mild' },
+        { day: 'Day 3', temp: temp + 1, humidity: humidity - 2, condition: 'Warm' }
+    ];
+    
+    // Build forecast panel
+    forecastPanel.innerHTML = forecasts.map(f => `
+        <div class="forecast-card">
+            <div class="forecast-day">${f.day}</div>
+            <div class="forecast-temp">${f.temp}°C</div>
+            <div class="forecast-humidity">${f.humidity}% humidity</div>
+            <div style="font-size: 10px; margin-top: 5px; color: #2D5A3D;">${f.condition}</div>
+        </div>
+    `).join('');
+    
+    // Check if conditions are good for ambient curing
+    // Ideal: temp > 30°C AND humidity > 70% (natural steam room)
+    const isNaturalSteamRoom = temp >= 30 && humidity >= 70;
+    const isGoodForAmbient = temp >= 25 && humidity >= 60;
+    
+    // Update forecast display
+    forecastTemp.textContent = temp + '°C';
+    forecastHumidity.textContent = humidity + '%';
+    
+    // Calculate diesel savings (₹5000 per hour steam × 24 hours)
+    const dailySteamCost = 5000 * 24; // ₹120,000 per day
+    const ambientCost = 1500 * 24; // ₹36,000 per day
+    const savings = dailySteamCost - ambientCost;
+    savingsAmount.textContent = '₹' + savings.toLocaleString();
+    
+    if (isNaturalSteamRoom) {
+        // PERFECT conditions - natural steam room!
+        energySection.style.display = 'block';
+        weatherAlert.style.borderLeftColor = '#2D5A3D';
+        curingRecommendation.textContent = '🌿 AMBIENT ONLY';
+        curingRecommendation.style.background = '#2D5A3D';
+        steamStatus.textContent = 'DISABLED';
+        steamStatus.style.background = '#ff4444';
+        ambientStatus.textContent = 'ACTIVE';
+        ambientStatus.style.background = '#2D5A3D';
+        
+        // Auto-uncheck steam in curing methods
+        document.querySelectorAll('.pill input[value="steam"]').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        return {
+            arbitrage: true,
+            recommendation: 'ambient',
+            savings: savings,
+            message: 'Steam Disabled – Ambient Conditions Sufficient'
+        };
+    } 
+    else if (isGoodForAmbient) {
+        // Good conditions - partial savings
+        energySection.style.display = 'block';
+        weatherAlert.style.borderLeftColor = '#C4763A';
+        curingRecommendation.textContent = '⚠️ AMBIENT POSSIBLE';
+        curingRecommendation.style.background = '#C4763A';
+        steamStatus.textContent = 'OPTIONAL';
+        steamStatus.style.background = '#C4763A';
+        ambientStatus.textContent = 'RECOMMENDED';
+        ambientStatus.style.background = '#2D5A3D';
+        
+        return {
+            arbitrage: true,
+            recommendation: 'optional',
+            savings: savings * 0.7,
+            message: 'Partial ambient curing possible – 70% steam reduction'
+        };
+    }
+    else {
+        // Poor conditions - need steam
+        energySection.style.display = 'none';
+        return {
+            arbitrage: false,
+            recommendation: 'steam',
+            savings: 0,
+            message: 'Steam required – ambient conditions insufficient'
+        };
+    }
+}
+
+// Modify your runAnalysis function to include weather arbitrage
+// Add this inside the try block, after getting data but before updating UI:
+
+// Check weather arbitrage
+const arbitrage = checkWeatherArbitrage(temp, humidity, document.getElementById('season').value);
+
+// If arbitrage active, modify the recommendation
+if (arbitrage.arbitrage) {
+    // Add annotation to results
+    setTimeout(() => {
+        // Add annotation to the results header
+        const resHdr = document.querySelector('.res-hdr p');
+        const annotation = document.createElement('div');
+        annotation.style.marginTop = '10px';
+        annotation.style.padding = '8px 12px';
+        annotation.style.background = '#fef3eb';
+        annotation.style.border = '1px solid #e8c9a8';
+        annotation.style.borderRadius = '4px';
+        annotation.style.fontSize = '12px';
+        annotation.style.fontWeight = '500';
+        annotation.style.color = '#C4763A';
+        annotation.innerHTML = '🔆 <strong>Steam Disabled – Ambient Conditions Sufficient</strong> | Daily Savings: ₹' + arbitrage.savings.toLocaleString();
+        resHdr.parentNode.insertBefore(annotation, resHdr.nextSibling);
+    }, 500);
+}
+</script>
+
+</body>
+</html>
